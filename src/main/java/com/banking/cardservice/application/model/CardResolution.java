@@ -1,6 +1,6 @@
 package com.banking.cardservice.application.model;
 
-import com.banking.cardservice.domain.model.HolderDocument;
+import com.banking.cardservice.domain.model.vo.HolderDocument;
 import java.util.List;
 import java.util.UUID;
 

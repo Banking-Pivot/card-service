@@ -1,4 +1,4 @@
-package com.banking.cardservice.domain.model;
+package com.banking.cardservice.domain.model.enums;
 
 /**
  * State of the link between a card and a bank account: {@link #PENDING} while Account Service is

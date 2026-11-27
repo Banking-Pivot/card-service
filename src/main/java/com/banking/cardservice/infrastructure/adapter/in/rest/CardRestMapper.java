@@ -56,7 +56,8 @@ public class CardRestMapper {
         .linkedAt(utc(link.createdAt()));
   }
 
-  private static Rejection toRejection(com.banking.cardservice.domain.model.Rejection rejection) {
+  private static Rejection toRejection(
+      com.banking.cardservice.domain.model.vo.Rejection rejection) {
     return rejection == null
         ? null
         : new Rejection().code(rejection.code()).message(rejection.message());

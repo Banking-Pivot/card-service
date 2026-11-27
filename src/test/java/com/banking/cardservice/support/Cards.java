@@ -1,7 +1,7 @@
 package com.banking.cardservice.support;
 
 import com.banking.cardservice.domain.model.Card;
-import com.banking.cardservice.domain.model.CardNumber;
+import com.banking.cardservice.domain.model.vo.CardNumber;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;

@@ -21,7 +21,7 @@ import com.banking.cardservice.application.port.in.ResolveCardUseCase;
 import com.banking.cardservice.application.port.out.CardNumberGenerator;
 import com.banking.cardservice.application.port.out.CardStorePort;
 import com.banking.cardservice.application.port.out.VerificationPublisherPort;
-import com.banking.cardservice.domain.model.CardNumber;
+import com.banking.cardservice.domain.model.vo.CardNumber;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.util.UUID;

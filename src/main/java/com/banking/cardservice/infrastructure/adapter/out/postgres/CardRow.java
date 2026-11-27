@@ -2,10 +2,10 @@ package com.banking.cardservice.infrastructure.adapter.out.postgres;
 
 import com.banking.cardservice.domain.model.AccountLink;
 import com.banking.cardservice.domain.model.Card;
-import com.banking.cardservice.domain.model.CardNumber;
-import com.banking.cardservice.domain.model.CardStatus;
-import com.banking.cardservice.domain.model.HolderDocument;
-import com.banking.cardservice.domain.model.Rejection;
+import com.banking.cardservice.domain.model.enums.CardStatus;
+import com.banking.cardservice.domain.model.vo.CardNumber;
+import com.banking.cardservice.domain.model.vo.HolderDocument;
+import com.banking.cardservice.domain.model.vo.Rejection;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;

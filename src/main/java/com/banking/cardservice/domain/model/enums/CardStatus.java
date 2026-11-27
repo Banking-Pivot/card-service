@@ -1,4 +1,4 @@
-package com.banking.cardservice.domain.model;
+package com.banking.cardservice.domain.model.enums;
 
 /**
  * Where a debit card is in its life.

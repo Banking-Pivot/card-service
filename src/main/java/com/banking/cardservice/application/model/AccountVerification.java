@@ -1,8 +1,8 @@
 package com.banking.cardservice.application.model;
 
 import com.banking.cardservice.domain.model.Card;
-import com.banking.cardservice.domain.model.HolderDocument;
-import com.banking.cardservice.domain.model.Rejection;
+import com.banking.cardservice.domain.model.vo.HolderDocument;
+import com.banking.cardservice.domain.model.vo.Rejection;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;

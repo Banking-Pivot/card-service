@@ -1,7 +1,7 @@
 package com.banking.cardservice.infrastructure.adapter.in.kafka;
 
 import com.banking.cardservice.application.model.CardResolution;
-import com.banking.cardservice.domain.model.HolderDocument;
+import com.banking.cardservice.domain.model.vo.HolderDocument;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
 import java.util.UUID;

@@ -1,8 +1,8 @@
 package com.banking.cardservice.infrastructure.adapter.out.postgres;
 
 import com.banking.cardservice.domain.model.AccountLink;
-import com.banking.cardservice.domain.model.LinkStatus;
-import com.banking.cardservice.domain.model.Rejection;
+import com.banking.cardservice.domain.model.enums.LinkStatus;
+import com.banking.cardservice.domain.model.vo.Rejection;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.data.annotation.Id;

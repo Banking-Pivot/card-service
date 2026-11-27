@@ -1,4 +1,4 @@
-package com.banking.cardservice.domain.model;
+package com.banking.cardservice.domain.model.vo;
 
 import java.util.function.IntSupplier;
 

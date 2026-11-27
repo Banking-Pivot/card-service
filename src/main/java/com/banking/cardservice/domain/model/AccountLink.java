@@ -1,5 +1,7 @@
 package com.banking.cardservice.domain.model;
 
+import com.banking.cardservice.domain.model.enums.LinkStatus;
+import com.banking.cardservice.domain.model.vo.Rejection;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;

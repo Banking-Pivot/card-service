@@ -7,7 +7,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.banking.cardservice.application.exception.CardNotFoundException;
 import com.banking.cardservice.domain.exception.LinkedAccountNotFoundException;
 import com.banking.cardservice.domain.model.Card;
-import com.banking.cardservice.domain.model.CardStatus;
+import com.banking.cardservice.domain.model.enums.CardStatus;
 import com.banking.cardservice.support.Cards;
 import com.banking.cardservice.support.InMemoryCardStore;
 import java.util.UUID;

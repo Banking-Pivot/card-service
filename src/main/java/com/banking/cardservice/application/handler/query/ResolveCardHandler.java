@@ -4,7 +4,7 @@ import com.banking.cardservice.application.model.CardResolution;
 import com.banking.cardservice.application.port.in.ResolveCardUseCase;
 import com.banking.cardservice.application.port.out.CardStorePort;
 import com.banking.cardservice.domain.model.Card;
-import com.banking.cardservice.domain.model.CardStatus;
+import com.banking.cardservice.domain.model.enums.CardStatus;
 import java.util.Objects;
 import java.util.UUID;
 import reactor.core.publisher.Mono;

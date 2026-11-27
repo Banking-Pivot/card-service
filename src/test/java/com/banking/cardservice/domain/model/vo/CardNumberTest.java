@@ -1,4 +1,4 @@
-package com.banking.cardservice.domain.model;
+package com.banking.cardservice.domain.model.vo;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
