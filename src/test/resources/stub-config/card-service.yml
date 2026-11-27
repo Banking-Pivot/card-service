@@ -1,0 +1,25 @@
+# Settings served by the stub Config Server in integration tests. Pinned here so tests do not
+# depend on the banking-config repository; same shape as banking-config/card-service.yml.
+card:
+  messaging:
+    commands-topic: banking.card.commands
+    replies-topic: banking.card.replies
+    account-commands-topic: banking.account.commands
+    default-reply-topic: banking.transaction.replies
+    reply-topics:
+      - banking.transaction.replies
+      - banking.yanki.replies
+    publish-timeout: 5s
+    # Short wait so a retried message stays fast.
+    retry-interval: 100ms
+    # The periodic re-send stays out of the way: the tests run it themselves.
+    resend-interval: 1h
+    resend-after: 30s
+    resend-batch-size: 50
+    handling-timeout: 30s
+  limits:
+    max-cards-per-customer: 3
+spring:
+  r2dbc:
+    pool:
+      max-size: 20
