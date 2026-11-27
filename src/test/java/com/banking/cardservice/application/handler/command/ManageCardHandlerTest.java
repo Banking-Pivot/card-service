@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.banking.cardservice.application.exception.CardNotFoundException;
+import com.banking.cardservice.domain.exception.CardRuleViolationException;
 import com.banking.cardservice.domain.exception.LinkedAccountNotFoundException;
+import com.banking.cardservice.domain.exception.RuleViolation;
 import com.banking.cardservice.domain.model.Card;
 import com.banking.cardservice.domain.model.enums.CardStatus;
 import com.banking.cardservice.support.Cards;
@@ -69,8 +71,26 @@ class ManageCardHandlerTest {
   }
 
   @Test
+  void theCardIsCancelledOnceAndCancellingItAgainWritesNothing() {
+    Card cancelled = handler.cancel(CARD).block();
+
+    assertThat(cancelled.status()).isEqualTo(CardStatus.CANCELLED);
+    assertThat(cancelled.updatedAt()).isEqualTo(Cards.START.plusSeconds(30));
+    assertThat(store.get(CARD)).isEqualTo(cancelled);
+    assertThat(handler.cancel(CARD).block()).isEqualTo(cancelled);
+    assertThat(store.updates()).isEqualTo(1);
+    assertThatThrownBy(() -> handler.block(CARD).block())
+        .isInstanceOfSatisfying(
+            CardRuleViolationException.class,
+            broken -> assertThat(broken.violation()).isEqualTo(RuleViolation.CARD_CANCELLED));
+  }
+
+  @Test
   void aCardThatDoesNotExistCannotBeManaged() {
     UUID unknown = id(404);
+
+    assertThatThrownBy(() -> handler.cancel(unknown).block())
+        .isInstanceOf(CardNotFoundException.class);
 
     assertThatThrownBy(() -> handler.block(unknown).block())
         .isInstanceOf(CardNotFoundException.class);

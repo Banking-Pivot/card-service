@@ -133,6 +133,7 @@ class CardApiTest extends IntegrationTest {
     expectError(unlink(unknown, secondAccount), 404, "CARD_NOT_FOUND");
     expectError(block(unknown), 404, "CARD_NOT_FOUND");
     expectError(unblock(unknown), 404, "CARD_NOT_FOUND");
+    expectError(cancel(unknown), 404, "CARD_NOT_FOUND");
   }
 
   @Test
@@ -288,6 +289,67 @@ class CardApiTest extends IntegrationTest {
         .jsonPath("$.status")
         .isEqualTo("ACTIVE");
     link(card.getId(), secondAccount).expectStatus().isAccepted();
+  }
+
+  @Test
+  void aCardIsCancelledForGoodAndTakesNoMoreChanges() {
+    CardResponse card = activeCard(customer, mainAccount);
+
+    cancel(card.getId()).expectStatus().isNoContent().expectBody().isEmpty();
+    cancel(card.getId()).expectStatus().isNoContent();
+
+    CardResponse cancelled = card(card.getId());
+    assertThat(cancelled.getStatus()).isEqualTo(CardStatus.CANCELLED);
+    assertThat(cancelled.getMainAccountId()).isEqualTo(mainAccount);
+    assertThat(cancelled.getAccounts()).hasSize(1);
+    expectError(block(card.getId()), 422, "CARD_CANCELLED");
+    expectError(unblock(card.getId()), 422, "CARD_CANCELLED");
+    expectError(link(card.getId(), secondAccount), 422, "CARD_CANCELLED");
+    expectError(unlink(card.getId(), mainAccount), 422, "CARD_CANCELLED");
+    expectError(changeMainAccount(card.getId(), mainAccount), 422, "CARD_CANCELLED");
+    expectError(cancel(UUID.randomUUID()), 404, "CARD_NOT_FOUND");
+    webTestClient.delete().uri("/api/v1/cards/not-a-uuid").exchange().expectStatus().isBadRequest();
+  }
+
+  @Test
+  void aCardIsCancelledWhileItWaitsBlockedOrRejectedAndKeepsItsReason() {
+    CardResponse pending = issued(customer, mainAccount);
+    CardResponse refused = issued(customer, secondAccount);
+    participants.accountVerificationRejected(
+        linkId(refused.getId(), secondAccount),
+        secondAccount,
+        "ACCOUNT_NOT_FOUND",
+        "The account does not exist.");
+    awaitStatus(refused.getId(), CardStatus.REJECTED);
+    CardResponse blocked = activeCard(customer, UUID.randomUUID());
+    block(blocked.getId()).expectStatus().isOk();
+
+    cancel(pending.getId()).expectStatus().isNoContent();
+    cancel(refused.getId()).expectStatus().isNoContent();
+    cancel(blocked.getId()).expectStatus().isNoContent();
+
+    assertThat(card(pending.getId()).getStatus()).isEqualTo(CardStatus.CANCELLED);
+    assertThat(card(blocked.getId()).getStatus()).isEqualTo(CardStatus.CANCELLED);
+    CardResponse cancelled = card(refused.getId());
+    assertThat(cancelled.getStatus()).isEqualTo(CardStatus.CANCELLED);
+    assertThat(cancelled.getRejection().getCode()).isEqualTo("ACCOUNT_NOT_FOUND");
+  }
+
+  @Test
+  void cancellingACardLetsTheCustomerGetANewOne() {
+    CardResponse first = activeCard(customer, mainAccount);
+    activeCard(customer, secondAccount);
+    issued(customer, UUID.randomUUID());
+    expectError(issue(customer, mainAccount), 422, "CARD_LIMIT_REACHED");
+
+    cancel(first.getId()).expectStatus().isNoContent();
+
+    issue(customer, mainAccount).expectStatus().isAccepted();
+    expectError(issue(customer, mainAccount), 422, "CARD_LIMIT_REACHED");
+  }
+
+  private WebTestClient.ResponseSpec cancel(UUID cardId) {
+    return webTestClient.delete().uri("/api/v1/cards/{cardId}", cardId).exchange();
   }
 
   private WebTestClient.ResponseSpec unlink(UUID cardId, UUID accountId) {

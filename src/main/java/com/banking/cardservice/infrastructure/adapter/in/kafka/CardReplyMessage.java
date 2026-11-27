@@ -17,7 +17,8 @@ import java.util.UUID;
  * @param holderDocumentType CARD_RESOLVED only: type of the identity document of the customer, left
  *     out when the card does not know it
  * @param holderDocumentNumber CARD_RESOLVED only: number of that document, left out with the type
- * @param code CARD_RESOLUTION_REJECTED only: {@code CARD_NOT_FOUND} or {@code CARD_NOT_ACTIVE}
+ * @param code CARD_RESOLUTION_REJECTED only: {@code CARD_NOT_FOUND}, {@code CARD_NOT_ACTIVE} or
+ *     {@code CARD_CANCELLED}
  * @param message CARD_RESOLUTION_REJECTED only: explanation
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)

@@ -41,8 +41,8 @@ public interface CardStorePort {
    */
   Flux<Card> findWithVerificationSentBefore(Instant sentBefore, int limit);
 
-  /** How many cards the customer has, leaving out the ones that were rejected. */
-  Mono<Long> countNotRejected(UUID customerId);
+  /** How many cards the customer holds: the rejected and the cancelled ones are left out. */
+  Mono<Long> countHeld(UUID customerId);
 
   /** One page of cards, newest first, with the total. */
   Mono<ResultPage<Card>> findPage(ListCardsQuery query);

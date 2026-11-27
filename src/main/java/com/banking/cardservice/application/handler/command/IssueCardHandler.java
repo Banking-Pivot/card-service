@@ -20,7 +20,8 @@ import reactor.util.retry.Retry;
  * whether that account belongs to the customer and whether the customer has no overdue debt.
  *
  * <p>A customer has a limited number of cards. The ones that were rejected do not count: they never
- * became cards the customer can use.
+ * became cards the customer can use. Neither do the cancelled ones: the customer no longer has
+ * them.
  *
  * <p>The customer and the account are not looked up here. This service never calls another one over
  * HTTP; the answer arrives later through the event broker and decides whether the card is active or
@@ -42,7 +43,8 @@ public class IssueCardHandler implements IssueCardUseCase {
    *
    * @param numbers source of card numbers
    * @param ids source of identifiers for the card and its link
-   * @param maxCardsPerCustomer most cards a customer may have, not counting the rejected ones
+   * @param maxCardsPerCustomer most cards a customer may have, not counting the rejected and the
+   *     cancelled ones
    */
   public IssueCardHandler(
       CardStorePort cards,
@@ -74,7 +76,7 @@ public class IssueCardHandler implements IssueCardUseCase {
 
   private Mono<Void> requireRoomFor(UUID customerId) {
     return cards
-        .countNotRejected(customerId)
+        .countHeld(customerId)
         .flatMap(
             held ->
                 held >= maxCardsPerCustomer

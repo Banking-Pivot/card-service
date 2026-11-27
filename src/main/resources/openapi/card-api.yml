@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Card API
-  version: 1.0.0
+  version: 1.1.0
   description: |
     API for the debit cards of the bank and the bank accounts linked to them.
 
@@ -24,7 +24,10 @@ info:
     A question that gets no answer is sent again until it is answered.
 
     A customer can have a limited number of cards (three unless the bank configures another
-    limit). Cards that were REJECTED do not count.
+    limit). Cards that were REJECTED or CANCELLED do not count.
+
+    A card is deleted with DELETE /api/v1/cards/{cardId}, which cancels it for good: the card
+    stays readable as CANCELLED, cannot pay and takes no more changes.
 
     The card number has 16 digits and is never returned whole: responses show its last four.
     Instants are UTC.
@@ -45,7 +48,8 @@ paths:
         that the account belongs to the customer, and the result is read from the card.
 
         A customer who already has the maximum number of cards (not counting the REJECTED
-        ones) is refused at once with 422 CARD_LIMIT_REACHED and nothing is recorded.
+        and the CANCELLED ones) is refused at once with 422 CARD_LIMIT_REACHED and nothing is
+        recorded.
       requestBody:
         required: true
         content:
@@ -116,6 +120,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CardResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/CardNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Cards]
+      operationId: cancelCard
+      summary: Cancel the card for good
+      description: |
+        The card becomes CANCELLED, whatever its status was, and never leaves that status. It
+        stays readable with its accounts, cannot pay, takes no more changes (422
+        CARD_CANCELLED) and no longer counts toward the limit of cards of the customer.
+        Cancelling a card that is already cancelled changes nothing and is answered 204 too.
+      responses:
+        '204':
+          description: The card is CANCELLED.
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -339,6 +361,7 @@ components:
       description: |
         A rule of the card does not allow the change:
         - CARD_NOT_ACTIVE: the card is pending, rejected or blocked.
+        - CARD_CANCELLED: the card was cancelled and takes no more changes.
         - ACCOUNT_NOT_LINKED: the account chosen as main is not LINKED to the card.
         - MAIN_ACCOUNT_REQUIRED: the main account cannot be unlinked.
       content:
@@ -351,7 +374,7 @@ components:
             timestamp: '2026-11-20T15:00:00Z'
             path: /api/v1/cards/9b8a7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d/accounts
     CardLimitReached:
-      description: The customer already has the maximum number of cards, not counting the REJECTED ones (CARD_LIMIT_REACHED).
+      description: The customer already has the maximum number of cards, not counting the REJECTED and the CANCELLED ones (CARD_LIMIT_REACHED).
       content:
         application/json:
           schema:
@@ -464,7 +487,9 @@ components:
     Rejection:
       title: Rejection
       type: object
-      description: Why Account Service refused the account. Present when the status is REJECTED.
+      description: >-
+        Why Account Service refused the account. Present when the status is REJECTED, and on a
+        CANCELLED card that was rejected before.
       required: [code, message]
       properties:
         code:
@@ -533,7 +558,7 @@ components:
     CardStatus:
       title: CardStatus
       type: string
-      enum: [PENDING_VERIFICATION, ACTIVE, REJECTED, BLOCKED]
+      enum: [PENDING_VERIFICATION, ACTIVE, REJECTED, BLOCKED, CANCELLED]
     LinkStatus:
       title: LinkStatus
       type: string

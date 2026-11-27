@@ -37,4 +37,9 @@ public class ManageCardHandler implements ManageCardUseCase {
   public Mono<Card> unblock(UUID cardId) {
     return updater.change(cardId, card -> card.unblock(clock.instant()));
   }
+
+  @Override
+  public Mono<Card> cancel(UUID cardId) {
+    return updater.change(cardId, card -> card.cancel(clock.instant()));
+  }
 }

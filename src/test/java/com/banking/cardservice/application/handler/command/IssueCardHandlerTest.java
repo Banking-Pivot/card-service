@@ -128,8 +128,21 @@ class IssueCardHandlerTest {
     Card card = handler.execute(COMMAND).block();
 
     assertThat(card.status()).isEqualTo(CardStatus.PENDING_VERIFICATION);
-    assertThat(store.countNotRejected(Cards.CUSTOMER).block()).isEqualTo(3);
-    assertThat(store.countNotRejected(id(901)).block()).isEqualTo(1);
+    assertThat(store.countHeld(Cards.CUSTOMER).block()).isEqualTo(3);
+    assertThat(store.countHeld(id(901)).block()).isEqualTo(1);
     assertThat(publisher.sent()).hasSize(1);
+  }
+
+  @Test
+  void cancellingACardMakesRoomForANewOne() {
+    store.put(Cards.active(id(101), id(111), id(121)));
+    store.put(Cards.active(id(102), id(112), id(122)));
+    store.put(Cards.active(id(103), id(113), id(123)).cancel(Cards.START));
+
+    Card card = handler.execute(COMMAND).block();
+
+    assertThat(card.status()).isEqualTo(CardStatus.PENDING_VERIFICATION);
+    assertThat(store.countHeld(Cards.CUSTOMER).block()).isEqualTo(3);
+    assertThat(store.size()).isEqualTo(4);
   }
 }

@@ -263,6 +263,62 @@ class CardTest {
   }
 
   @Test
+  void aCardIsCancelledFromAnyStatusAndCancellingItAgainChangesNothing() {
+    Card pending = Cards.pending(CARD, MAIN_LINK, MAIN_ACCOUNT);
+    Rejection reason = new Rejection("ACCOUNT_NOT_FOUND", "Unknown.");
+    Card rejected = pending.accountRejected(MAIN_LINK, reason, START).orElseThrow();
+    Card active = Cards.active(CARD, MAIN_LINK, MAIN_ACCOUNT);
+
+    Card cancelled = active.cancel(LATER);
+
+    assertThat(cancelled.status()).isEqualTo(CardStatus.CANCELLED);
+    assertThat(cancelled.version()).isEqualTo(active.version() + 1);
+    assertThat(cancelled.updatedAt()).isEqualTo(LATER);
+    assertThat(cancelled.accounts()).isEqualTo(active.accounts());
+    assertThat(cancelled.cancel(LATER.plusSeconds(1))).isSameAs(cancelled);
+    assertThat(pending.cancel(LATER).status()).isEqualTo(CardStatus.CANCELLED);
+    assertThat(active.block(START).cancel(LATER).status()).isEqualTo(CardStatus.CANCELLED);
+    // A rejected card stays readable with its reason after it is cancelled.
+    assertThat(rejected.cancel(LATER).status()).isEqualTo(CardStatus.CANCELLED);
+    assertThat(rejected.cancel(LATER).rejection()).isEqualTo(reason);
+  }
+
+  @Test
+  void aCancelledCardTakesNoMoreChanges() {
+    Card cancelled =
+        Cards.withTwoAccounts(CARD, MAIN_LINK, MAIN_ACCOUNT, SECOND_LINK, SECOND_ACCOUNT)
+            .cancel(LATER);
+
+    assertViolation(() -> cancelled.block(LATER), RuleViolation.CARD_CANCELLED);
+    assertViolation(() -> cancelled.unblock(LATER), RuleViolation.CARD_CANCELLED);
+    assertViolation(
+        () -> cancelled.linkAccount(THIRD_LINK, THIRD_ACCOUNT, "corr", LATER),
+        RuleViolation.CARD_CANCELLED);
+    assertViolation(
+        () -> cancelled.unlinkAccount(SECOND_ACCOUNT, LATER), RuleViolation.CARD_CANCELLED);
+    assertViolation(
+        () -> cancelled.changeMainAccount(SECOND_ACCOUNT, LATER), RuleViolation.CARD_CANCELLED);
+    assertThatThrownBy(() -> cancelled.block(LATER)).hasMessage("The card is cancelled.");
+  }
+
+  @Test
+  void aCardCancelledWhileItWaitsStaysCancelledWhenTheAnswerArrives() {
+    Card cancelled = Cards.pending(CARD, MAIN_LINK, MAIN_ACCOUNT).cancel(LATER);
+
+    Card confirmed = cancelled.accountVerified(MAIN_LINK, "PEN", LATER).orElseThrow();
+    Card refused =
+        cancelled
+            .accountRejected(MAIN_LINK, new Rejection("ACCOUNT_NOT_FOUND", "Unknown."), LATER)
+            .orElseThrow();
+
+    assertThat(confirmed.status()).isEqualTo(CardStatus.CANCELLED);
+    assertThat(confirmed.link(MAIN_LINK).orElseThrow().isLinked()).isTrue();
+    assertThat(refused.status()).isEqualTo(CardStatus.CANCELLED);
+    assertThat(refused.rejection()).isNull();
+    assertThat(cancelled.isIssuance(MAIN_LINK)).isFalse();
+  }
+
+  @Test
   void anAccountOfABlockedCardIsStillConfirmedWhenItsAnswerArrives() {
     Card blocked =
         Cards.active(CARD, MAIN_LINK, MAIN_ACCOUNT)

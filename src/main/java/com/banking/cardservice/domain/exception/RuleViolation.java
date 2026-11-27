@@ -4,6 +4,8 @@ package com.banking.cardservice.domain.exception;
 public enum RuleViolation {
   /** The card is pending, rejected or blocked. */
   CARD_NOT_ACTIVE,
+  /** The card was cancelled and takes no more changes. */
+  CARD_CANCELLED,
   /** The account is already linked to the card, or being checked. */
   ACCOUNT_ALREADY_LINKED,
   /** The account chosen as main is not LINKED to the card. */

@@ -107,12 +107,13 @@ public final class InMemoryCardStore implements CardStorePort {
   }
 
   @Override
-  public Mono<Long> countNotRejected(UUID customerId) {
+  public Mono<Long> countHeld(UUID customerId) {
     return Mono.fromSupplier(
         () ->
             cards.values().stream()
                 .filter(card -> card.customerId().equals(customerId))
                 .filter(card -> card.status() != CardStatus.REJECTED)
+                .filter(card -> card.status() != CardStatus.CANCELLED)
                 .count());
   }
 

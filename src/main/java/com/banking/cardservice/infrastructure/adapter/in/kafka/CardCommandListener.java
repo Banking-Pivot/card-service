@@ -19,8 +19,8 @@ import tools.jackson.databind.json.JsonMapper;
  * it links a wallet to one.
  *
  * <ul>
- *   <li>A card that does not exist or is not active is answered with CARD_RESOLUTION_REJECTED and
- *       its code.
+ *   <li>A card that does not exist, is not active or was cancelled is answered with
+ *       CARD_RESOLUTION_REJECTED and its code.
  *   <li>A command that fails because something did not work (the database, the answer itself) is
  *       not answered: the error leaves the listener and the container handles the command again a
  *       few times before it logs and skips it. Whoever asked asks again later; the question changes

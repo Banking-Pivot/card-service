@@ -77,6 +77,11 @@ public class CardsApiDelegateImpl implements CardsApiDelegate {
   }
 
   @Override
+  public Mono<ResponseEntity<Void>> cancelCard(UUID cardId, ServerWebExchange exchange) {
+    return manageCard.cancel(cardId).thenReturn(ResponseEntity.noContent().<Void>build());
+  }
+
+  @Override
   public Mono<ResponseEntity<CardPageResponse>> listCards(
       Integer page, Integer size, UUID customerId, ServerWebExchange exchange) {
     return Mono.fromCallable(() -> new ListCardsQuery(PageRequest.of(page, size), customerId))

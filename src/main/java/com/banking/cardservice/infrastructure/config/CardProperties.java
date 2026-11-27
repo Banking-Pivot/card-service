@@ -26,7 +26,8 @@ public record CardProperties(
   /**
    * Limits of the bank on cards.
    *
-   * @param maxCardsPerCustomer most cards a customer may have, not counting the rejected ones
+   * @param maxCardsPerCustomer most cards a customer may have, not counting the rejected and the
+   *     cancelled ones
    */
   public record Limits(@DefaultValue("3") @Min(1) int maxCardsPerCustomer) {}
 

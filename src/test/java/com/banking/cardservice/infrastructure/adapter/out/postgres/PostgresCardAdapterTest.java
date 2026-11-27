@@ -122,6 +122,32 @@ class PostgresCardAdapterTest extends IntegrationTest {
   }
 
   @Test
+  void aCancelledCardIsStoredFromAnyStatusAndARejectedOneKeepsItsReason() {
+    UUID rejectedId = UUID.randomUUID();
+    Card pending = fresh(rejectedId, customer, mainLink, mainAccount, 0);
+    store.insert(pending).block();
+    Card rejected =
+        pending
+            .accountRejected(
+                mainLink, new Rejection("ACCOUNT_NOT_FOUND", "No such account."), START)
+            .orElseThrow();
+    store.update(rejected, pending.version()).block();
+    UUID waitingId = UUID.randomUUID();
+    Card waiting = fresh(waitingId, customer, UUID.randomUUID(), mainAccount, 1);
+    store.insert(waiting).block();
+
+    Card cancelledRejected = rejected.cancel(START.plusSeconds(2));
+    store.update(cancelledRejected, rejected.version()).block();
+    Card cancelledWaiting = waiting.cancel(START.plusSeconds(3));
+    store.update(cancelledWaiting, waiting.version()).block();
+
+    assertStored(cancelledRejected);
+    assertStored(cancelledWaiting);
+    assertThat(store.findById(rejectedId).block().rejection().code())
+        .isEqualTo("ACCOUNT_NOT_FOUND");
+  }
+
+  @Test
   void anUpdateOverAVersionThatMovedIsRefusedAndWritesNothing() {
     UUID id = UUID.randomUUID();
     Card pending = fresh(id, customer, mainLink, mainAccount, 0);
@@ -260,7 +286,7 @@ class PostgresCardAdapterTest extends IntegrationTest {
   }
 
   @Test
-  void onlyTheCardsOfTheCustomerThatWereNotRejectedAreCounted() {
+  void onlyTheCardsOfTheCustomerThatWereNotRejectedNorCancelledAreCounted() {
     UUID activeLink = UUID.randomUUID();
     UUID blockedLink = UUID.randomUUID();
     UUID rejectedLink = UUID.randomUUID();
@@ -287,12 +313,20 @@ class PostgresCardAdapterTest extends IntegrationTest {
                     START.plusSeconds(7))
                 .orElseThrow())
         .block();
+    UUID cancelledLink = UUID.randomUUID();
+    store
+        .insert(
+            fresh(UUID.randomUUID(), customer, cancelledLink, mainAccount, 9)
+                .accountVerified(cancelledLink, "PEN", START.plusSeconds(10))
+                .orElseThrow()
+                .cancel(START.plusSeconds(11)))
+        .block();
     UUID other = UUID.randomUUID();
     store.insert(fresh(UUID.randomUUID(), other, UUID.randomUUID(), mainAccount, 8)).block();
 
-    assertThat(store.countNotRejected(customer).block()).isEqualTo(3);
-    assertThat(store.countNotRejected(other).block()).isEqualTo(1);
-    assertThat(store.countNotRejected(UUID.randomUUID()).block()).isZero();
+    assertThat(store.countHeld(customer).block()).isEqualTo(3);
+    assertThat(store.countHeld(other).block()).isEqualTo(1);
+    assertThat(store.countHeld(UUID.randomUUID()).block()).isZero();
   }
 
   private ResultPage<Card> page(int page, int size, UUID ofCustomer) {

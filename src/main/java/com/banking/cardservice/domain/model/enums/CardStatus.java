@@ -9,11 +9,13 @@ package com.banking.cardservice.domain.model.enums;
  *   <li>{@link #ACTIVE}: it can pay.
  *   <li>{@link #REJECTED}: Account Service refused its first account. Final.
  *   <li>{@link #BLOCKED}: it cannot pay until it is unblocked.
+ *   <li>{@link #CANCELLED}: deleted by request. It cannot pay and takes no more changes. Final.
  * </ul>
  */
 public enum CardStatus {
   PENDING_VERIFICATION,
   ACTIVE,
   REJECTED,
-  BLOCKED
+  BLOCKED,
+  CANCELLED
 }

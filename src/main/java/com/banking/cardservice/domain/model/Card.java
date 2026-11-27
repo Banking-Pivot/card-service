@@ -93,8 +93,8 @@ public record Card(
    * Adds an account after the ones already linked, waiting for Account Service to confirm it. A
    * link that was rejected before is replaced by the new attempt.
    *
-   * @throws CardRuleViolationException when the card is not active, or the account is already
-   *     linked or being checked
+   * @throws CardRuleViolationException when the card is cancelled or not active, or the account is
+   *     already linked or being checked
    */
   public Card linkAccount(UUID linkId, UUID accountId, String correlationId, Instant now) {
     requireActive();
@@ -163,7 +163,8 @@ public record Card(
    * Makes a linked account the one the card charges first. Choosing the current main account
    * changes nothing and returns this same card.
    *
-   * @throws CardRuleViolationException when the card is not active or the account is not LINKED
+   * @throws CardRuleViolationException when the card is cancelled or not active, or the account is
+   *     not LINKED
    */
   public Card changeMainAccount(UUID accountId, Instant now) {
     requireActive();
@@ -193,7 +194,8 @@ public record Card(
    * Removes an account from the card, whatever the state of its link.
    *
    * @throws LinkedAccountNotFoundException when the card has no link to the account
-   * @throws CardRuleViolationException when the card is not active or the account is the main one
+   * @throws CardRuleViolationException when the card is cancelled or not active, or the account is
+   *     the main one
    */
   public Card unlinkAccount(UUID accountId, Instant now) {
     requireActive();
@@ -212,7 +214,7 @@ public record Card(
   /**
    * Blocks an active card. A card that is already blocked is returned as it is.
    *
-   * @throws CardRuleViolationException when the card is pending or rejected
+   * @throws CardRuleViolationException when the card is pending, rejected or cancelled
    */
   public Card block(Instant now) {
     if (status == CardStatus.BLOCKED) {
@@ -225,16 +227,27 @@ public record Card(
   /**
    * Unblocks a blocked card. A card that is already active is returned as it is.
    *
-   * @throws CardRuleViolationException when the card is pending or rejected
+   * @throws CardRuleViolationException when the card is pending, rejected or cancelled
    */
   public Card unblock(Instant now) {
     if (status == CardStatus.ACTIVE) {
       return this;
     }
     if (status != CardStatus.BLOCKED) {
-      throw notActive();
+      throw notUsable();
     }
     return with(CardStatus.ACTIVE, rejection, holderDocument, accounts, now);
+  }
+
+  /**
+   * Cancels the card for good, whatever its status. The card keeps its accounts and, when it was
+   * rejected, the reason. A card that is already cancelled is returned as it is.
+   */
+  public Card cancel(Instant now) {
+    if (status == CardStatus.CANCELLED) {
+      return this;
+    }
+    return with(CardStatus.CANCELLED, rejection, holderDocument, accounts, now);
   }
 
   /**
@@ -336,11 +349,14 @@ public record Card(
 
   private void requireActive() {
     if (status != CardStatus.ACTIVE) {
-      throw notActive();
+      throw notUsable();
     }
   }
 
-  private static CardRuleViolationException notActive() {
-    return new CardRuleViolationException(RuleViolation.CARD_NOT_ACTIVE, "The card is not active.");
+  // A cancelled card says so; any other card that is not active is just not active.
+  private CardRuleViolationException notUsable() {
+    return status == CardStatus.CANCELLED
+        ? new CardRuleViolationException(RuleViolation.CARD_CANCELLED, "The card is cancelled.")
+        : new CardRuleViolationException(RuleViolation.CARD_NOT_ACTIVE, "The card is not active.");
   }
 }

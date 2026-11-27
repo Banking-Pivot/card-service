@@ -118,6 +118,29 @@ class ResolveCardFlowTest extends IntegrationTest {
   }
 
   @Test
+  void aCancelledCardIsRefusedWithItsOwnCode() {
+    UUID cardId = activeCard(customer, first).getId();
+    webTestClient
+        .delete()
+        .uri("/api/v1/cards/{cardId}", cardId)
+        .exchange()
+        .expectStatus()
+        .isNoContent();
+    UUID transactionId = UUID.randomUUID();
+
+    participants.resolveCard(transactionId, cardId, null);
+
+    ReceivedMessage reply = participants.awaitMessage("CARD_RESOLUTION_REJECTED", transactionId);
+    assertThat(reply.text())
+        .isEqualTo(
+            "{\"type\":\"CARD_RESOLUTION_REJECTED\",\"transactionId\":\""
+                + transactionId
+                + "\",\"cardId\":\""
+                + cardId
+                + "\",\"code\":\"CARD_CANCELLED\",\"message\":\"The card is cancelled.\"}");
+  }
+
+  @Test
   void aCommandThatNamesATopicOutsideTheListIsNotAnswered() {
     UUID cardId = activeCard(customer, first).getId();
     UUID toAccounts = UUID.randomUUID();

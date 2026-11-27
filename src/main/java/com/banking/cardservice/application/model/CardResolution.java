@@ -31,7 +31,7 @@ public sealed interface CardResolution {
   /**
    * The card cannot be used.
    *
-   * @param code {@code CARD_NOT_FOUND} or {@code CARD_NOT_ACTIVE}
+   * @param code {@code CARD_NOT_FOUND}, {@code CARD_NOT_ACTIVE} or {@code CARD_CANCELLED}
    * @param message explanation
    */
   record Refused(UUID cardId, String code, String message) implements CardResolution {}

@@ -11,12 +11,13 @@ import reactor.core.publisher.Mono;
 
 /**
  * Answers which accounts a card uses. Only an active card has an answer: a card that is pending,
- * rejected or blocked cannot pay, and neither can one that does not exist.
+ * rejected, blocked or cancelled cannot pay, and neither can one that does not exist.
  */
 public class ResolveCardHandler implements ResolveCardUseCase {
 
   public static final String CARD_NOT_FOUND = "CARD_NOT_FOUND";
   public static final String CARD_NOT_ACTIVE = "CARD_NOT_ACTIVE";
+  public static final String CARD_CANCELLED = "CARD_CANCELLED";
 
   private final CardStorePort cards;
 
@@ -34,6 +35,9 @@ public class ResolveCardHandler implements ResolveCardUseCase {
   }
 
   private static CardResolution resolve(Card card) {
+    if (card.status() == CardStatus.CANCELLED) {
+      return new CardResolution.Refused(card.id(), CARD_CANCELLED, "The card is cancelled.");
+    }
     if (card.status() != CardStatus.ACTIVE) {
       return new CardResolution.Refused(card.id(), CARD_NOT_ACTIVE, "The card is not active.");
     }

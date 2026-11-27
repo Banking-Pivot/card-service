@@ -92,6 +92,14 @@ class CardQueriesTest {
   }
 
   @Test
+  void aCancelledCardIsRefusedWithItsOwnCode() {
+    store.put(Cards.active(CARD, id(11), MAIN_ACCOUNT).cancel(Cards.START));
+
+    assertThat(new ResolveCardHandler(store).execute(CARD).block())
+        .isEqualTo(new CardResolution.Refused(CARD, "CARD_CANCELLED", "The card is cancelled."));
+  }
+
+  @Test
   void anActiveCardResolvesWithTheDocumentOfItsHolderWhenItKnowsIt() {
     HolderDocument document = new HolderDocument("DNI", "45871236");
     store.put(

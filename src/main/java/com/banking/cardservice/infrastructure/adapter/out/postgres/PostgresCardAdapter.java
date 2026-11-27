@@ -109,9 +109,13 @@ public class PostgresCardAdapter implements CardStorePort {
   }
 
   @Override
-  public Mono<Long> countNotRejected(UUID customerId) {
+  public Mono<Long> countHeld(UUID customerId) {
     return template.count(
-        query(where(CUSTOMER_ID).is(customerId).and(STATUS).not(CardStatus.REJECTED.name())),
+        query(
+            where(CUSTOMER_ID)
+                .is(customerId)
+                .and(STATUS)
+                .notIn(CardStatus.REJECTED.name(), CardStatus.CANCELLED.name())),
         CardRow.class);
   }
 
@@ -172,7 +176,7 @@ public class PostgresCardAdapter implements CardStorePort {
 
   // The customer, the number and the creation time never change. The rejection and the holder
   // document only go from empty to set, so while they are empty they are left out of the
-  // statement.
+  // statement. A cancelled card keeps both.
   private static Update changesOf(Card changed) {
     Update update =
         Update.update(STATUS, changed.status().name())
